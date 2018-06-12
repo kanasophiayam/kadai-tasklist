@@ -17,11 +17,18 @@ class TasksController extends Controller
      */
     public function index()
     {
+        
         $tasks = Task::all();
 
-        return view('tasks.index', [
+        if (\Auth::check()) {
+            $user = \Auth::user();
+            $tasks =Task::all()->where("user_id",$user->id);
+            return view('tasks.index', [
             'tasks' => $tasks,
         ]);
+        }else {
+            return view('welcome');
+        }
     }
 
     /**
@@ -32,10 +39,10 @@ class TasksController extends Controller
     public function create()
     {
         $task = new Task;
-
-        return view('tasks.create', [
+        
+        return view('tasks.create' , [
             'task' => $task,
-        ]);
+            ]);
     }
 
     /**
@@ -45,17 +52,16 @@ class TasksController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
-    {
+    {    
          $this->validate($request, [
-            'status' => 'required|max:10',
+            'status' => 'required|max:10',   // add
             'content' => 'required|max:191',
         ]);
-        
         $task = new Task;
         $task->status = $request->status;
         $task->content = $request->content;
+        $task->user_id =\Auth::user()->id;
         $task->save();
-
         return redirect('/');
     }
 
@@ -65,15 +71,19 @@ class TasksController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
+     
     public function show($id)
     {
-               $task = Task::find($id);
-
+        
+        $task = Task::find($id);
+        if(\Auth::user()->id === $task->user_id){
         return view('tasks.show', [
             'task' => $task,
-        ]);
+            ]);
+    }else{return redirect('/');
     }
-
+    
+    }
     /**
      * Show the form for editing the specified resource.
      *
@@ -96,12 +106,10 @@ class TasksController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-     
     public function update(Request $request, $id)
-    {
-    
+    {   
         $this->validate($request, [
-            'status' => 'required|max:10', 
+            'status' => 'required|max:10',   // add
             'content' => 'required|max:191',
         ]);
         
@@ -120,10 +128,13 @@ class TasksController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
-    {
-        $task = Task::find($id);
+    {   
+        
+        $task =\App\ Task::find($id);
+        if(\Auth::user()->id ===$task->user_id){
         $task->delete();
 
         return redirect('/');
     }
+}
 }
